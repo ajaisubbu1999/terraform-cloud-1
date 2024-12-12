@@ -7,7 +7,7 @@ terraform {
   }
  # Adding Backend as S3 for Remote State Storage
   backend "s3" {
-    bucket = "vgsterraform"
+    bucket = "terraform-state1122"
     key    = "vgs/terraform.tfstate"
     region = "ap-south-1"   
   }
