@@ -1,19 +1,3 @@
-# terraform {
-#   required_providers {
-#     aws = {
-#       source  = "hashicorp/aws"
-#       version = "~> 5.0"
-#     }
-#   }
-# }
-
-# # Configure the AWS Provider
-# provider "aws" {
-#   region = "ap-south-1"
-#   profile = "default"
-# }
-
-
 # Create New VPC
 resource "aws_vpc" "myvpc" {
   cidr_block = "10.0.0.0/16"
@@ -23,10 +7,10 @@ resource "aws_vpc" "myvpc" {
 resource "aws_subnet" "pub-subnet" {
   vpc_id     = aws_vpc.myvpc.id
   cidr_block = "10.0.1.0/24"
-  availability_zone = "ap-south-1a"
+  availability_zone = "ap-south-1b"
 
   tags = {
-    Name = "public-subnett"
+    Name = "public-subnettt"
   }
 }
 
@@ -34,10 +18,10 @@ resource "aws_subnet" "pub-subnet" {
 resource "aws_subnet" "pvt-subnet" {
   vpc_id     = aws_vpc.myvpc.id
   cidr_block = "10.0.2.0/24"
-  availability_zone = "ap-south-1b"
+  availability_zone = "ap-south-1a"
 
   tags = {
-    Name = "private-subnet"
+    Name = "private-subnett"
   }
 }
 # Routing Table For Public
@@ -65,7 +49,8 @@ resource "aws_route_table" "pvt-route" {
 
   route {
     cidr_block = "0.0.0.0/0"
-    vpc_peering_connection_id = aws_vpc_peering_connection.mypeer.id
+     gateway_id = aws_nat_gateway.ngw.id
+    #vpc_peering_connection_id = aws_vpc_peering_connection.mypeer.id
   }
   tags = {
     Name = "private-route"
@@ -136,7 +121,7 @@ resource "aws_security_group" "pvt-sg" {
   }
 
   tags = {
-    Name = "prvt-sg"
+    Name = "prvt-sgq"
   }
 }
 
@@ -144,25 +129,25 @@ resource "aws_security_group" "pvt-sg" {
 # Ec2 Pub
 resource "aws_instance" "public-ec2" {
   ami    = "ami-0ad21ae1d0696ad58"
-  instance_type = "t2.micro"
+  instance_type = "t2.small"
   subnet_id     = aws_subnet.pub-subnet.id
   key_name   = "Mumbai-Linux"
   associate_public_ip_address = true
   vpc_security_group_ids = [aws_security_group.pub-sg.id]
   tags = {
-    Name = "pub-vgs"
+    Name = "Public-vgs"
   }
 }
 
 # EC2 Prvt
 resource "aws_instance" "private-ec2" {
   ami    = "ami-0ad21ae1d0696ad58"
-  instance_type = "t2.micro"
+  instance_type = "t2.small"
   subnet_id     = aws_subnet.pvt-subnet.id
   key_name   = "Mumbai-Linux"
   vpc_security_group_ids = [aws_security_group.pvt-sg.id]
   tags = {
-    Name = "prvt-vgs"
+    Name = "Private-vgs"
   }
 }
 
@@ -174,16 +159,16 @@ resource "aws_internet_gateway" "igw" {
     Name = "myigw"
   }
 }
-# EIP                                # Must Read Before Delete This
-resource "aws_eip" "myeip" {
-#   vpc   =  true
-}
-#Nat Gate Way
-resource "aws_nat_gateway" "ngw" {
-  allocation_id = aws_eip.myeip.id
-  subnet_id     = aws_subnet.pub-subnet.id
+ # EIP # Must Read Before Delete This
+ resource "aws_eip" "myeip" {
+#    vpc   =  true
+ }
+ #Nat Gate Way
+ resource "aws_nat_gateway" "ngw" {
+   allocation_id = aws_eip.myeip.id
+   subnet_id     = aws_subnet.pub-subnet.id
   
-  tags = {
-    Name = "natgw"
-  }
-}
+   tags = {
+     Name = "natgw"
+   }
+ }
